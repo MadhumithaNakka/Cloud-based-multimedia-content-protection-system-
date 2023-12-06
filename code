@@ -1,0 +1,50 @@
+from flask import Flask, request, jsonify
+from cryptography.fernet import Fernet
+
+app = Flask(_name_)
+
+# Generate a key for symmetric encryption (Fernet)
+encryption_key = Fernet.generate_key()
+cipher_suite = Fernet(encryption_key)
+
+# In a production environment, securely manage and store the encryption key.
+
+# Example database to store encrypted content
+content_database = {}
+
+
+def encrypt_content(content):
+    return cipher_suite.encrypt(content.encode())
+
+
+def decrypt_content(encrypted_content):
+    return cipher_suite.decrypt(encrypted_content).decode()
+
+
+@app.route('/upload', methods=['POST'])
+def upload_content():
+    # Receive and store encrypted content in the cloud
+    data = request.get_json()
+    content_id = data.get('content_id')
+    encrypted_content = encrypt_content(data.get('content'))
+
+    # In a real-world scenario, you would likely store this encrypted content in a database
+    content_database[content_id] = encrypted_content
+
+    return jsonify({'message': 'Content uploaded successfully'}), 200
+
+
+@app.route('/download/<content_id>', methods=['GET'])
+def download_content(content_id):
+    # Retrieve and decrypt content from the cloud
+    encrypted_content = content_database.get(content_id)
+
+    if encrypted_content:
+        decrypted_content = decrypt_content(encrypted_content)
+        return jsonify({'content': decrypted_content}), 200
+    else:
+        return jsonify({'message': 'Content not found'}), 404
+
+
+if _name_ == '_main_':
+    app.run(debug=True)
